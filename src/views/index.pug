@@ -7,16 +7,18 @@ html
   body
     h1(class="w3-center") #{title}
     hr
-    table(class="w3-table-all")
-      tr
-        th Tieto
-        th Arvo
-      tr
-        td Käyntikerrat
-        td #{visitCount}
-      tr
-        td Palvelimen nimi
-        td #{hostname}
-      tr
-        td Kellonaika
-        td #{timeString}
+    form(action="/" method="POST")
+      table(class="w3-table-all")
+        tr
+          th Tieto
+          th Arvo
+        tr
+          td Käyntikerrat
+          td #{visitCount}
+        tr
+          td Palvelimen nimi
+          td #{hostname}
+        tr
+          td Kellonaika
+          td #{timeString}
+      button(class="w3-btn w3-red" type="submit") Nollaa käyntikerrat

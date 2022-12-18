@@ -18,7 +18,7 @@ https://nodejs.org/en/download/
 ### Gulp
 
 ```bash
-npm install -g gulp-cli
+npm install -g gulp-cli typescript
 ```
 
 ### Redis
@@ -55,4 +55,8 @@ cd dist
 node ./index.js
 ```
 
-Jos ohjelma käynnistyi oikein, se kertoo, missä osoitteessa ohjelma vastaa.
+Jos ohjelma käynnistyi oikein, se kertoo, missä osoitteessa ohjelma vastaa. Mikäli haluat, että sivu päivittyy automaattisesti kun `index.pug` tai `app.css`-tiedostoja päivitetään, tulee eri välilehdessä ajaa päähakemistossa käsky:
+
+```bash
+gulp dev
+```

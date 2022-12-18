@@ -15,9 +15,10 @@ redisClient.on('error',
               process.exit(1);
           });
 
-process.on('exit', code => {
+process.on('SIGINT', () => {
     redisClient.quit();
-    console.log(`Hei hei, prosessi päättyi koodilla: ${code}`);
+    console.log(`Hei hei!`);
+    process.exit(0);
 });
 
 interface Model {
@@ -29,14 +30,14 @@ interface Model {
 
 app.set('view engine', 'pug');
 
-app.get('/', (req: Request, res: Response) => {
-    const model: Model = {
-        "title": "Tietoa",
-        "visitCount": "Ei yhteyttä Redis-palvelimeen.",
-        "hostname": os.hostname(),
-        "timeString": "Kellonaika ei tiedossa."
-    };
+const model: Model = {
+    "title": "Tietoa",
+    "visitCount": "Ei yhteyttä Redis-palvelimeen.",
+    "hostname": os.hostname(),
+    "timeString": "Kellonaika ei tiedossa."
+};
 
+app.get('/', (req: Request, res: Response) => {
     // Kellonaika
     const currentTime: Date = new Date();
     const hours = currentTime.getHours().toString().padStart(2, '0');
@@ -52,14 +53,44 @@ app.get('/', (req: Request, res: Response) => {
         redisUrl = 'redis://localhost:6379';
     }
     redisClient.connect(redisUrl).then(() => {
-        redisClient.incr('visits').then((value: string | number) => {
+        let redisResultPromise : Promise<any> = redisClient.incr('visits').then((value: string | number) => {
             model.visitCount = value;
-        }).then(() => {
+        });
+        redisResultPromise.then(() => {
             redisClient.disconnect();
         }).then(() => {
             res.render('index', model);
         }).catch((er: Error) => {
             console.error(`Arvon päivittäminen Redikseen epäonnistui: ${er.message}`);
+        });
+    });
+});
+
+app.post('/', (req: Request, res: Response) => {
+    // Kellonaika
+    const currentTime: Date = new Date();
+    const hours = currentTime.getHours().toString().padStart(2, '0');
+    const minutes = currentTime.getMinutes().toString().padStart(2, '0');
+    const seconds = currentTime.getSeconds().toString().padStart(2, '0');
+    model.timeString = `${hours}:${minutes}:${seconds}`;
+
+    // Vierailujen lukumäärä (Redis)
+    let redisUrl: string;
+    if(process.env.REDIS_URL) {
+        redisUrl = process.env.REDIS_URL;
+    } else {
+        redisUrl = 'redis://localhost:6379';
+    }
+    redisClient.connect(redisUrl).then(() => {
+        let redisResultPromise : Promise<any> = redisClient.set('visits', 0).then((value: string | number) => {
+            model.visitCount = value;
+        });
+        redisResultPromise.then(() => {
+            redisClient.disconnect();
+        }).then(() => {
+            res.redirect('/');
+        }).catch((er: Error) => {
+            console.error(`Arvon nollaaminen Rediksessä epäonnistui: ${er.message}`);
         });
     });
 });
