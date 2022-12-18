@@ -17,7 +17,7 @@ redisClient.on('error',
 
 process.on('SIGINT', () => {
     redisClient.quit();
-    console.log(`Hei hei!`);
+    console.log(`Hei hei!\n`);
     process.exit(0);
 });
 
@@ -37,6 +37,26 @@ const model: Model = {
     "timeString": "Kellonaika ei tiedossa."
 };
 
+function resolveRedisUrl(): string {
+    return process.env.REDIS_URL || 'redis://localhost:6379';
+}
+
+function handleRedisResponse(resultPromise: Promise<any>, req: Request, res: Response, errorMessage: string) {
+    resultPromise.then((value: string | number) => {
+        model.visitCount = value;
+    }).then(() => {
+        redisClient.disconnect();
+    }).then(() => {
+        if(req.method === 'POST') {
+            res.redirect('/');
+        } else {
+            res.render('index', model);
+        }
+    }).catch((er: Error) => {
+        console.error(`${errorMessage}: ${er.message}`);
+    });
+}
+
 app.get('/', (req: Request, res: Response) => {
     // Kellonaika
     const currentTime: Date = new Date();
@@ -45,53 +65,18 @@ app.get('/', (req: Request, res: Response) => {
     const seconds = currentTime.getSeconds().toString().padStart(2, '0');
     model.timeString = `${hours}:${minutes}:${seconds}`;
 
-    // Vierailujen lukumäärä (Redis)
-    let redisUrl: string;
-    if(process.env.REDIS_URL) {
-        redisUrl = process.env.REDIS_URL;
-    } else {
-        redisUrl = 'redis://localhost:6379';
-    }
+    let redisUrl: string = resolveRedisUrl();
     redisClient.connect(redisUrl).then(() => {
-        let redisResultPromise : Promise<any> = redisClient.incr('visits').then((value: string | number) => {
-            model.visitCount = value;
-        });
-        redisResultPromise.then(() => {
-            redisClient.disconnect();
-        }).then(() => {
-            res.render('index', model);
-        }).catch((er: Error) => {
-            console.error(`Arvon päivittäminen Redikseen epäonnistui: ${er.message}`);
-        });
+        let redisResultPromise : Promise<any> = redisClient.incr('visits');
+        handleRedisResponse(redisResultPromise, req, res, `Arvon päivittäminen Redikseen epäonnistui`);
     });
 });
 
 app.post('/', (req: Request, res: Response) => {
-    // Kellonaika
-    const currentTime: Date = new Date();
-    const hours = currentTime.getHours().toString().padStart(2, '0');
-    const minutes = currentTime.getMinutes().toString().padStart(2, '0');
-    const seconds = currentTime.getSeconds().toString().padStart(2, '0');
-    model.timeString = `${hours}:${minutes}:${seconds}`;
-
-    // Vierailujen lukumäärä (Redis)
-    let redisUrl: string;
-    if(process.env.REDIS_URL) {
-        redisUrl = process.env.REDIS_URL;
-    } else {
-        redisUrl = 'redis://localhost:6379';
-    }
+    let redisUrl: string = resolveRedisUrl();
     redisClient.connect(redisUrl).then(() => {
-        let redisResultPromise : Promise<any> = redisClient.set('visits', 0).then((value: string | number) => {
-            model.visitCount = value;
-        });
-        redisResultPromise.then(() => {
-            redisClient.disconnect();
-        }).then(() => {
-            res.redirect('/');
-        }).catch((er: Error) => {
-            console.error(`Arvon nollaaminen Rediksessä epäonnistui: ${er.message}`);
-        });
+        let redisResultPromise : Promise<any> = redisClient.set('visits', 0);
+        handleRedisResponse(redisResultPromise, req, res, `Arvon nollaaminen Rediksessä epäonnistui`);
     });
 });
 
