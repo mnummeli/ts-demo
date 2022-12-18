@@ -6,7 +6,7 @@ const os = require('node:os');
 const path = require('node:path');
 import express, { Express, Request, Response } from 'express';
 const app: Express = express();
-const PORT= process.env.port || 3000;
+const PORT= process.env.PORT || 3000;
 const { createClient } = require('redis');
 const redisClient = createClient();
 redisClient.on('error',
@@ -36,9 +36,9 @@ app.get('/', (req: Request, res: Response) => {
         "hostname": os.hostname(),
         "timeString": "Kellonaika ei tiedossa."
     };
-    const currentTime: Date = new Date();
 
     // Kellonaika
+    const currentTime: Date = new Date();
     const hours = currentTime.getHours().toString().padStart(2, '0');
     const minutes = currentTime.getMinutes().toString().padStart(2, '0');
     const seconds = currentTime.getSeconds().toString().padStart(2, '0');
@@ -67,5 +67,5 @@ app.get('/', (req: Request, res: Response) => {
 app.use(express.static(path.join(__dirname, 'static')));
 
 app.listen(PORT, () => {
-    console.log(`Sovellus vastaa portissa: ${PORT}.`);
+    console.log(`Sovellus vastaa osoitteessa: http://${os.hostname()}:${PORT}`);
 });
