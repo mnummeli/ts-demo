@@ -1,5 +1,5 @@
 **/*~
 **/*.js
 **/*.BAK
-dest/
+dist/
 node_modules/
