@@ -8,11 +8,13 @@ import express, { Express, Request, Response } from 'express';
 const app: Express = express();
 const PORT= process.env.PORT || 3000;
 const { createClient } = require('redis');
-const redisClient = createClient();
+const redisClient = createClient({
+    url: resolveRedisUrl()
+});
 redisClient.on('error',
           (er: Error) => {
               console.error(`Rediksen alustaminen epäonnistui: ${er.message}`);
-              process.exit(1);
+              redisClient.quit();
           });
 
 process.on('SIGINT', () => {
@@ -66,7 +68,7 @@ app.get('/', (req: Request, res: Response) => {
     model.timeString = `${hours}:${minutes}:${seconds}`;
 
     let redisUrl: string = resolveRedisUrl();
-    redisClient.connect(redisUrl).then(() => {
+    redisClient.connect().then(() => {
         let redisResultPromise : Promise<any> = redisClient.incr('visits');
         handleRedisResponse(redisResultPromise, req, res, `Arvon päivittäminen Redikseen epäonnistui`);
     });
@@ -74,7 +76,7 @@ app.get('/', (req: Request, res: Response) => {
 
 app.post('/', (req: Request, res: Response) => {
     let redisUrl: string = resolveRedisUrl();
-    redisClient.connect(redisUrl).then(() => {
+    redisClient.connect().then(() => {
         let redisResultPromise : Promise<any> = redisClient.set('visits', 0);
         handleRedisResponse(redisResultPromise, req, res, `Arvon nollaaminen Rediksessä epäonnistui`);
     });

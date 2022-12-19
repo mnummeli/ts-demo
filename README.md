@@ -60,3 +60,34 @@ Jos ohjelma käynnistyi oikein, se kertoo, missä osoitteessa ohjelma vastaa. Mi
 ```bash
 gulp dev
 ```
+
+## Ajaminen Docker-konteissa
+
+Tätä varten tulee `docker` olla asennettuna. Se onnistuu Ubuntu Linuxissa käskyllä
+
+```bash
+sudo apt-get update
+sudo apt-get install docker.io docker-compose
+```
+
+### Levykuvan kääntäminen
+
+```bash
+npm run build-docker-image
+```
+
+### Ajaminen `docker-compose`:lla
+
+```bash
+docker-compose up -d
+```
+
+Porttien eteenpäin välittämisen vuoksi selaimen voi nyt osoittaa osoitteeseen:
+
+http://localhost:3000
+
+Palvelu voidaan sammuttaa käskyllä:
+
+```bash
+docker-compose down
+```

@@ -1,9 +1,11 @@
+# Builder
 FROM node:18 AS build
 WORKDIR /build
 COPY . .
 RUN npm install && \
     npm run build
 
+# Server image
 FROM node:18
 USER node
 WORKDIR /app
